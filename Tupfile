@@ -1,0 +1,1 @@
+: main.c |> gcc -o %o %f -Wall -Wextra -pedantic -lraylib |> bezier
