@@ -1,6 +1,16 @@
+#include <raylib.h>
 #include <stdio.h>
 
 int main(void) {
-  printf("Hello, World!\n");
+  InitWindow(800, 600, "Bézier");
+  SetTargetFPS(60);
+
+  while (!WindowShouldClose()) {
+    BeginDrawing();
+    ClearBackground(RED);
+    EndDrawing();
+  }
+
+  CloseWindow();
   return 0;
 }
