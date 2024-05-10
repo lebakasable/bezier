@@ -30,33 +30,33 @@ fn sample(style: *style, x: uint, y: uint) u32 = {
 		return to_argb(&c);
 	case let l: linear =>
 		const (c0, c1, p0, p1) = l;
-		const dir = sub(&p1, &p0);
+		const dir = sub(p1, p0);
 		const pt: point = (x: f32, y: f32);
-		const delta = sub(&pt, &p0);
-		const dot0 = dot(&dir, &delta);
+		const delta = sub(pt, p0);
+		const dot0 = dot(dir, delta);
 		if (dot0 <= 0.0) {
 			return to_argb(&c0);
 		};
-		const dot1 = dot(&dir, &sub(&pt, &p1));
+		const dot1 = dot(dir, sub(pt, p1));
 		if (dot1 >= 0.0) {
 			return to_argb(&c1);
 		};
 		const zero: point = (0.0, 0.0);
-		const glen = length(&dir);
-		const gpos = length(&project_on_line(&zero, &dir, &delta));
-		return to_argb(&lerp_sRGB(&c0, &c1, gpos / glen));
+		const glen = length(dir);
+		const gpos = length(project_on_line(zero, dir, delta));
+		return to_argb(&lerp_sRGB(c0, c1, gpos / glen));
 	case let r: radial =>
 		const (c0, c1, p0, p1) = r;
 		const pt: point = (x: f32, y: f32);
-		const dmax = distance(&p0, &p1);
-		const dactual = distance(&p0, &pt);
-		return to_argb(&lerp_sRGB(&c0, &c1, dactual / dmax));
+		const dmax = distance(p0, p1);
+		const dactual = distance(p0, pt);
+		return to_argb(&lerp_sRGB(c0, c1, dactual / dmax));
 	};
 };
 
-fn project_on_line(v1: *point, v2: *point, p: *point) point = {
+fn project_on_line(v1: point, v2: point, p: point) point = {
 	const l1 = sub(v2, v1);
 	const l2 = sub(p, v1);
-	const proj = dot(&l1, &l2) / dot(&l1, &l1);
-	return add(v1, &scale(&l1, proj));
+	const proj = dot(l1, l2) / dot(l1, l1);
+	return add(v1, scale(l1, proj));
 };

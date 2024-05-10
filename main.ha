@@ -60,7 +60,7 @@ fn render_marker(renderer: *sdl::renderer, pos: vec::point, color: hex_color) vo
 	const _size = (MARKER_SIZE, MARKER_SIZE);
 	fill_rect(
 		renderer,
-		vec::sub(&vec::scale(&_size, 0.5), &pos),
+		vec::sub(vec::scale(_size, 0.5), pos),
 		_size, color);
 };
 
@@ -85,6 +85,20 @@ fn render_bezier_markers(
 };
 
 let ps: []vec::point = [];
+let ps_selected: (size | void) = void;
+
+fn ps_at(pos: vec::point) (size | void) = {
+	const ps_size = (MARKER_SIZE: f32, MARKER_SIZE: f32);
+	for (let i = 0z; i < len(ps); i += 1) {
+		const ps_begin = vec::sub(vec::scale(ps_size, 0.5), ps[i]);
+		const ps_end = vec::add(ps_begin, ps_size);
+		if (ps_begin.0 <= pos.0 && pos.0 <= ps_end.0 &&
+			ps_begin.1 <= pos.1 && pos.1 <= ps_end.1) {
+			return i: size;
+		};
+	};
+	return void;
+};
 
 export fn main() void = {
 	sdl::init(sdl::init_flags::VIDEO)!;
@@ -117,8 +131,22 @@ export fn main() void = {
 		case let mouse: sdl::mouse_button_pressed =>
 			switch (mouse.button) {
 			case 1 =>
-				append(ps, (mouse.x: f32, mouse.y: f32));
+				const mouse_pos = (mouse.x: f32, mouse.y: f32);
+				if (len(ps) < 4) {
+					append(ps, mouse_pos);
+				} else {
+					ps_selected = ps_at(mouse_pos);
+				};
 			case => void;
+			};
+		case let mouse: sdl::mouse_button_released =>
+			if (mouse.button == 1) {
+				ps_selected = void;
+			};
+		case let mouse: sdl::mouse_moved =>
+			const mouse_pos = (mouse.x: f32, mouse.y: f32);
+			if (!(ps_selected is void)) {
+				ps[ps_selected as size] = mouse_pos;
 			};
 		case => void;
 		};
