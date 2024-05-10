@@ -58,10 +58,7 @@ fn fill_rect(renderer: *sdl::renderer, pos: vec::point, _size: vec::point, color
 
 fn render_marker(renderer: *sdl::renderer, pos: vec::point, color: hex_color) void = {
 	const _size = (MARKER_SIZE, MARKER_SIZE);
-	fill_rect(
-		renderer,
-		vec::sub(vec::scale(_size, 0.5), pos),
-		_size, color);
+	fill_rect(renderer, vec::sub(vec::scale(_size, 0.5), pos), _size, color);
 };
 
 fn bezier_sample(
@@ -180,15 +177,15 @@ export fn main() void = {
 		set_render_draw_color(renderer, BACKGROUND_COLOR);
 		sdl::render_clear(renderer)!;
 
-		for (let i = 0z; i < len(ps); i += 1) {
-			render_marker(renderer, ps[i], PEACH_COLOR);
-		};
-
 		if (len(ps) >= 4) {
 			render_line(renderer, ps[0], ps[1], MAUVE_COLOR);
 			render_line(renderer, ps[2], ps[3], MAUVE_COLOR);
 
 			render_bezier_curve(renderer, ps[0], ps[1], ps[2], ps[3], 0.01, TEAL_COLOR);
+		};
+
+		for (let i = 0z; i < len(ps); i += 1) {
+			render_marker(renderer, ps[i], PEACH_COLOR);
 		};
 
 		sdl::render_present(renderer);
