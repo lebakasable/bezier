@@ -1,0 +1,8 @@
+The pixbuf module provides support for working with image data as buffers of
+pixels. A buffer is created with a given pixel format and size by calling
+[[newbuffer]] (or [[newbuffer_static]]). Buffers may be filled with a uniform
+color using [[fill], copied to one another with [[copy]], or converted between
+formats with [[convert]].
+
+No additional operations are provided. Drawing operations, loading or saving
+pixel data from compressed image formats, etc, is provided by separate modules.
