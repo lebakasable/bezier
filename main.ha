@@ -64,6 +64,22 @@ fn render_marker(renderer: *sdl::renderer, pos: vec::point, color: hex_color) vo
 		_size, color);
 };
 
+fn bezier_sample(
+	a: vec::point,
+	b: vec::point,
+	c: vec::point,
+	d: vec::point,
+	f: f32,
+) vec::point = {
+	const ab = vec::lerpp(a, b, f);
+	const bc = vec::lerpp(b, c, f);
+	const cd = vec::lerpp(c, d, f);
+	const abc = vec::lerpp(ab, bc, f);
+	const bcd = vec::lerpp(bc, cd, f);
+	const abcd = vec::lerpp(abc, bcd, f);
+	return abcd;
+};
+
 fn render_bezier_markers(
 	renderer: *sdl::renderer,
 	a: vec::point,
@@ -71,16 +87,26 @@ fn render_bezier_markers(
 	c: vec::point,
 	d: vec::point,
 	s: f32,
-	color: hex_color
+	color: hex_color,
 ) void = {
 	for (let f = 0f32; f <= 1.0; f += s) {
-		const ab = vec::lerpp(a, b, f);
-		const bc = vec::lerpp(b, c, f);
-		const cd = vec::lerpp(c, d, f);
-		const abc = vec::lerpp(ab, bc, f);
-		const bcd = vec::lerpp(bc, cd, f);
-		const abcd = vec::lerpp(abc, bcd, f);
-		render_marker(renderer, abcd, color);
+		render_marker(renderer, bezier_sample(a, b, c, d, f), color);
+	};
+};
+
+fn render_bezier_curve(
+	renderer: *sdl::renderer,
+	a: vec::point,
+	b: vec::point,
+	c: vec::point,
+	d: vec::point,
+	s: f32,
+	color: hex_color,
+) void = {
+	for (let f = 0f32; f + s <= 1.0; f += s) {
+		const begin = bezier_sample(a, b, c, d, f);
+		const end = bezier_sample(a, b, c, d, f + s);
+		render_line(renderer, begin, end, color);
 	};
 };
 
@@ -159,7 +185,10 @@ export fn main() void = {
 		};
 
 		if (len(ps) >= 4) {
-			render_bezier_markers(renderer, ps[0], ps[1], ps[2], ps[3], 0.1, TEAL_COLOR);
+			render_line(renderer, ps[0], ps[1], MAUVE_COLOR);
+			render_line(renderer, ps[2], ps[3], MAUVE_COLOR);
+
+			render_bezier_curve(renderer, ps[0], ps[1], ps[2], ps[3], 0.01, TEAL_COLOR);
 		};
 
 		sdl::render_present(renderer);
