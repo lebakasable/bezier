@@ -6,6 +6,7 @@ use sdl = sdl::events;
 use sdl = sdl::pixels;
 use sdl = sdl::rect;
 use sdl = sdl::timer;
+use sdl = sdl::keycode;
 use vec;
 use math;
 
@@ -18,8 +19,9 @@ def MARKER_SIZE = 15f32;
 
 // https://catppuccin.com/palette
 def BACKGROUND_COLOR = 0x11111b; // #11111b
-def LINE_COLOR       = 0xfab387; // #fab387
-def RECT_COLOR       = 0x94e2d5; // #94e2d5
+def PEACH_COLOR      = 0xfab387; // #fab387
+def TEAL_COLOR       = 0x94e2d5; // #94e2d5
+def MAUVE_COLOR      = 0xcba6f7; // #cba6f7
 
 type hex_color = u32;
 
@@ -62,6 +64,26 @@ fn render_marker(renderer: *sdl::renderer, pos: vec::point, color: hex_color) vo
 		_size, color);
 };
 
+fn render_bezier_markers(
+	renderer: *sdl::renderer,
+	a: vec::point,
+	b: vec::point,
+	c: vec::point,
+	d: vec::point,
+	s: f32,
+	color: hex_color
+) void = {
+	for (let f = 0f32; f <= 1.0; f += s) {
+		const ab = vec::lerpp(a, b, f);
+		const bc = vec::lerpp(b, c, f);
+		const cd = vec::lerpp(c, d, f);
+		const abc = vec::lerpp(ab, bc, f);
+		const bcd = vec::lerpp(bc, cd, f);
+		const abcd = vec::lerpp(abc, bcd, f);
+		render_marker(renderer, abcd, color);
+	};
+};
+
 let ps: []vec::point = [];
 
 export fn main() void = {
@@ -86,6 +108,12 @@ export fn main() void = {
 			break;
 		case sdl::quit_requested =>
 			break :loop;
+		case let key: sdl::key_pressed =>
+			switch (key.keysym.sym) {
+			case sdl::keycode::RETURN =>
+				ps = [];
+			case => void;
+			};
 		case let mouse: sdl::mouse_button_pressed =>
 			switch (mouse.button) {
 			case 1 =>
@@ -99,14 +127,11 @@ export fn main() void = {
 		sdl::render_clear(renderer)!;
 
 		for (let i = 0z; i < len(ps); i += 1) {
-			render_marker(renderer, ps[i], LINE_COLOR);
+			render_marker(renderer, ps[i], PEACH_COLOR);
 		};
 
-		for (let i = 0z; len(ps) > 0 && i < len(ps) - 1; i += 1) {
-			render_marker(
-				renderer,
-				vec::lerpp(ps[i], ps[i + 1], (math::sinf64(t): f32 + 1.0)*0.5),
-				RECT_COLOR);
+		if (len(ps) >= 4) {
+			render_bezier_markers(renderer, ps[0], ps[1], ps[2], ps[3], 0.1, TEAL_COLOR);
 		};
 
 		sdl::render_present(renderer);
