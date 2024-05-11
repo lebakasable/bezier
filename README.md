@@ -11,7 +11,12 @@ $ make
 $ ./main
 ```
 
-You can place markers with the left mouse click, move them, switch between curve/markers rendering modes with `Tab` and clear the screen with `Return`.
+You can:
+- place markers with the left mouse click
+- move them by grabbing them
+- scroll to modify the distance between the lines/markers
+- switch between curve/markers rendering modes with `Tab`
+- clear the screen with `Return`
 
 ## Libraries used
 
