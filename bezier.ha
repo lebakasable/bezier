@@ -57,7 +57,7 @@ fn fill_rect(renderer: *sdl::renderer, pos: vec::v2f, _size: vec::v2f, color: he
 };
 
 fn render_marker(renderer: *sdl::renderer, pos: vec::v2f, color: hex_color) void = {
-	const _size = vec::v2f { x = MARKER_SIZE, y = MARKER_SIZE };
+	const _size = vec::vec2f(MARKER_SIZE: f32, MARKER_SIZE: f32);
 	fill_rect(renderer, vec::sub(pos, vec::scale(_size, 0.5)), _size, color);
 };
 
@@ -118,7 +118,7 @@ let ps: []vec::v2f = [];
 let ps_selected: (size | void) = void;
 
 fn ps_at(pos: vec::v2f) (size | void) = {
-	const ps_size = vec::v2f { x = MARKER_SIZE: f32, y = MARKER_SIZE: f32 };
+	const ps_size = vec::vec2f(MARKER_SIZE, MARKER_SIZE);
 	for (let i = 0z; i < len(ps); i += 1) {
 		const ps_begin = vec::sub(ps[i], vec::scale(ps_size, 0.5));
 		const ps_end = vec::add(ps_begin, ps_size);
@@ -165,7 +165,7 @@ export fn main() void = {
 		case let mouse: sdl::mouse_button_pressed =>
 			switch (mouse.button) {
 			case 1 =>
-				const mouse_pos = vec::v2f { x = mouse.x: f32, y = mouse.y: f32 };
+				const mouse_pos = vec::vec2f(mouse.x: f32, mouse.y: f32);
 				if (len(ps) < 4) {
 					append(ps, mouse_pos);
 				} else {
@@ -178,7 +178,7 @@ export fn main() void = {
 				ps_selected = void;
 			};
 		case let mouse: sdl::mouse_moved =>
-			const mouse_pos = vec::v2f { x = mouse.x: f32, y = mouse.y: f32 };
+			const mouse_pos = vec::vec2f(mouse.x: f32, mouse.y: f32);
 			if (!(ps_selected is void)) {
 				ps[ps_selected as size] = mouse_pos;
 			};
