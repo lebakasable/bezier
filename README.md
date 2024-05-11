@@ -22,5 +22,3 @@ You can:
 
 - SDL2: https://www.libsdl.org/
 - SDL2 bindings for Hare: https://github.com/Angluca/hare-sdl2
-- Pixel Buffers for Hare: https://git.sr.ht/~sircmpwn/pixbuf
-- Vector Graphics library for Hare: https://git.sr.ht/~sircmpwn/hare-vec

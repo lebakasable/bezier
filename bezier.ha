@@ -38,85 +38,92 @@ fn set_render_draw_color(renderer: *sdl::renderer, color: hex_color) void = {
 	sdl::set_render_draw_color(renderer, color.r, color.g, color.b, color.a)!;
 };
 
-fn render_line(renderer: *sdl::renderer, begin: vec::point, end: vec::point, color: hex_color) void = {
+fn render_line(renderer: *sdl::renderer, begin: vec::v2f, end: vec::v2f, color: hex_color) void = {
 	set_render_draw_color(renderer, color);
-	sdl::render_draw_line(renderer, begin.0: int, begin.1: int, end.0: int, end.1: int)!;
+	sdl::render_draw_line(renderer, begin.x: int, begin.y: int, end.x: int, end.y: int)!;
 };
 
-fn fill_rect(renderer: *sdl::renderer, pos: vec::point, _size: vec::point, color: hex_color) void = {
+fn fill_rect(renderer: *sdl::renderer, pos: vec::v2f, _size: vec::v2f, color: hex_color) void = {
 	set_render_draw_color(renderer, color);
 
 	const rect = sdl::rect {
-		x = pos.0: int,
-		y = pos.1: int,
-		w = _size.0: int,
-		h = _size.1: int,
+		x = pos.x: int,
+		y = pos.y: int,
+		w = _size.x: int,
+		h = _size.y: int,
 	};
 
 	sdl::render_fill_rect(renderer, &rect)!;
 };
 
-fn render_marker(renderer: *sdl::renderer, pos: vec::point, color: hex_color) void = {
-	const _size = (MARKER_SIZE, MARKER_SIZE);
-	fill_rect(renderer, vec::sub(vec::scale(_size, 0.5), pos), _size, color);
+fn render_marker(renderer: *sdl::renderer, pos: vec::v2f, color: hex_color) void = {
+	const _size = vec::v2f { x = MARKER_SIZE, y = MARKER_SIZE };
+	fill_rect(renderer, vec::sub(pos, vec::scale(_size, 0.5)), _size, color);
 };
 
-fn bezier_sample(
-	a: vec::point,
-	b: vec::point,
-	c: vec::point,
-	d: vec::point,
+fn beziern_sample(xs: []vec::v2f, f: f32) vec::v2f = {
+	let n = len(xs);
+	for (n > 1) {
+		for (let i = 0z; i < n - 1; i += 1) {
+			xs[i] = vec::lerp(xs[i], xs[i + 1], f);
+		};
+		n -= 1;
+	};
+
+	return xs[0];
+};
+
+fn bezier4_sample(
+	a: vec::v2f,
+	b: vec::v2f,
+	c: vec::v2f,
+	d: vec::v2f,
 	f: f32,
-) vec::point = {
-	const ab = vec::lerpp(a, b, f);
-	const bc = vec::lerpp(b, c, f);
-	const cd = vec::lerpp(c, d, f);
-	const abc = vec::lerpp(ab, bc, f);
-	const bcd = vec::lerpp(bc, cd, f);
-	const abcd = vec::lerpp(abc, bcd, f);
-	return abcd;
+) vec::v2f = {
+	let xs: [_]vec::v2f = [a, b, c, d];
+	return beziern_sample(xs, f);
 };
 
 fn render_bezier_markers(
 	renderer: *sdl::renderer,
-	a: vec::point,
-	b: vec::point,
-	c: vec::point,
-	d: vec::point,
+	a: vec::v2f,
+	b: vec::v2f,
+	c: vec::v2f,
+	d: vec::v2f,
 	s: f32,
 	color: hex_color,
 ) void = {
 	for (let f = 0f32; f <= 1.0; f += s) {
-		render_marker(renderer, bezier_sample(a, b, c, d, f), color);
+		render_marker(renderer, bezier4_sample(a, b, c, d, f), color);
 	};
 };
 
 fn render_bezier_curve(
 	renderer: *sdl::renderer,
-	a: vec::point,
-	b: vec::point,
-	c: vec::point,
-	d: vec::point,
+	a: vec::v2f,
+	b: vec::v2f,
+	c: vec::v2f,
+	d: vec::v2f,
 	s: f32,
 	color: hex_color,
 ) void = {
 	for (let f = 0f32; f + s <= 1.0; f += s) {
-		const begin = bezier_sample(a, b, c, d, f);
-		const end = bezier_sample(a, b, c, d, f + s);
+		const begin = bezier4_sample(a, b, c, d, f);
+		const end = bezier4_sample(a, b, c, d, f + s);
 		render_line(renderer, begin, end, color);
 	};
 };
 
-let ps: []vec::point = [];
+let ps: []vec::v2f = [];
 let ps_selected: (size | void) = void;
 
-fn ps_at(pos: vec::point) (size | void) = {
-	const ps_size = (MARKER_SIZE: f32, MARKER_SIZE: f32);
+fn ps_at(pos: vec::v2f) (size | void) = {
+	const ps_size = vec::v2f { x = MARKER_SIZE: f32, y = MARKER_SIZE: f32 };
 	for (let i = 0z; i < len(ps); i += 1) {
-		const ps_begin = vec::sub(vec::scale(ps_size, 0.5), ps[i]);
+		const ps_begin = vec::sub(ps[i], vec::scale(ps_size, 0.5));
 		const ps_end = vec::add(ps_begin, ps_size);
-		if (ps_begin.0 <= pos.0 && pos.0 <= ps_end.0 &&
-			ps_begin.1 <= pos.1 && pos.1 <= ps_end.1) {
+		if (ps_begin.x <= pos.x && pos.x <= ps_end.x &&
+			ps_begin.y <= pos.y && pos.y <= ps_end.y) {
 			return i: size;
 		};
 	};
@@ -158,7 +165,7 @@ export fn main() void = {
 		case let mouse: sdl::mouse_button_pressed =>
 			switch (mouse.button) {
 			case 1 =>
-				const mouse_pos = (mouse.x: f32, mouse.y: f32);
+				const mouse_pos = vec::v2f { x = mouse.x: f32, y = mouse.y: f32 };
 				if (len(ps) < 4) {
 					append(ps, mouse_pos);
 				} else {
@@ -171,7 +178,7 @@ export fn main() void = {
 				ps_selected = void;
 			};
 		case let mouse: sdl::mouse_moved =>
-			const mouse_pos = (mouse.x: f32, mouse.y: f32);
+			const mouse_pos = vec::v2f { x = mouse.x: f32, y = mouse.y: f32 };
 			if (!(ps_selected is void)) {
 				ps[ps_selected as size] = mouse_pos;
 			};
@@ -211,4 +218,8 @@ export fn main() void = {
 		sdl::delay(DELTA_TIME_MS);
 		t += DELTA_TIME_SEC;
 	};
+};
+
+@fini fn fini() void = {
+	free(ps);
 };
