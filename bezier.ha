@@ -61,7 +61,9 @@ fn render_marker(renderer: *sdl::renderer, pos: vec::v2f, color: hex_color) void
 	fill_rect(renderer, vec::sub(pos, vec::scale(_size, 0.5)), _size, color);
 };
 
-fn beziern_sample(xs: []vec::v2f, f: f32) vec::v2f = {
+fn bezier_sample(ps: []vec::v2f, xs: []vec::v2f, f: f32) vec::v2f = {
+	xs[0..] = ps[0..];
+
 	let n = len(xs);
 	for (n > 1) {
 		for (let i = 0z; i < n - 1; i += 1) {
@@ -73,48 +75,34 @@ fn beziern_sample(xs: []vec::v2f, f: f32) vec::v2f = {
 	return xs[0];
 };
 
-fn bezier4_sample(
-	a: vec::v2f,
-	b: vec::v2f,
-	c: vec::v2f,
-	d: vec::v2f,
-	f: f32,
-) vec::v2f = {
-	let xs: [_]vec::v2f = [a, b, c, d];
-	return beziern_sample(xs, f);
-};
-
 fn render_bezier_markers(
 	renderer: *sdl::renderer,
-	a: vec::v2f,
-	b: vec::v2f,
-	c: vec::v2f,
-	d: vec::v2f,
+	ps: []vec::v2f,
+	xs: []vec::v2f,
 	s: f32,
 	color: hex_color,
 ) void = {
 	for (let f = 0f32; f <= 1.0; f += s) {
-		render_marker(renderer, bezier4_sample(a, b, c, d, f), color);
+		render_marker(renderer, bezier_sample(ps, xs, f), color);
 	};
 };
 
 fn render_bezier_curve(
 	renderer: *sdl::renderer,
-	a: vec::v2f,
-	b: vec::v2f,
-	c: vec::v2f,
-	d: vec::v2f,
+	ps: []vec::v2f,
+	xs: []vec::v2f,
 	s: f32,
 	color: hex_color,
 ) void = {
 	for (let f = 0f32; f + s <= 1.0; f += s) {
-		const begin = bezier4_sample(a, b, c, d, f);
-		const end = bezier4_sample(a, b, c, d, f + s);
+		const begin = bezier_sample(ps, xs, f);
+		const end = bezier_sample(ps, xs, f + s);
 		render_line(renderer, begin, end, color);
 	};
 };
 
 let ps: []vec::v2f = [];
+let xs: []vec::v2f = [];
 let ps_selected: (size | void) = void;
 
 fn ps_at(pos: vec::v2f) (size | void) = {
@@ -166,10 +154,10 @@ export fn main() void = {
 			switch (mouse.button) {
 			case 1 =>
 				const mouse_pos = vec::vec2f(mouse.x: f32, mouse.y: f32);
-				if (len(ps) < 4) {
+				ps_selected = ps_at(mouse_pos);
+				if (ps_selected is void) {
 					append(ps, mouse_pos);
-				} else {
-					ps_selected = ps_at(mouse_pos);
+					append(xs, mouse_pos);
 				};
 			case => void;
 			};
@@ -198,14 +186,11 @@ export fn main() void = {
 		set_render_draw_color(renderer, BACKGROUND_COLOR);
 		sdl::render_clear(renderer)!;
 
-		if (len(ps) >= 4) {
-			render_line(renderer, ps[0], ps[1], MAUVE_COLOR);
-			render_line(renderer, ps[2], ps[3], MAUVE_COLOR);
-
+		if (len(ps) > 0) {
 			if (markers) {
-				render_bezier_markers(renderer, ps[0], ps[1], ps[2], ps[3], step, TEAL_COLOR);
+				render_bezier_markers(renderer, ps, xs, step, TEAL_COLOR);
 			} else {
-				render_bezier_curve(renderer, ps[0], ps[1], ps[2], ps[3], step, TEAL_COLOR);
+				render_bezier_curve(renderer, ps, xs, step, TEAL_COLOR);
 			};
 		};
 
@@ -222,4 +207,5 @@ export fn main() void = {
 
 @fini fn fini() void = {
 	free(ps);
+	free(xs);
 };
