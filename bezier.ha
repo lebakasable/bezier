@@ -196,6 +196,9 @@ export fn main() void = {
 
 		for (let i = 0z; i < len(ps); i += 1) {
 			render_marker(renderer, ps[i], PEACH_COLOR);
+			if (i < len(ps) - 1) {
+				render_line(renderer, ps[i], ps[i + 1], MAUVE_COLOR);
+			};
 		};
 
 		sdl::render_present(renderer);
