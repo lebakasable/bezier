@@ -61,13 +61,13 @@ fn render_marker(renderer: *sdl::renderer, pos: vec::v2f, color: hex_color) void
 	fill_rect(renderer, vec::sub(pos, vec::scale(_size, 0.5)), _size, color);
 };
 
-fn bezier_sample(ps: []vec::v2f, xs: []vec::v2f, f: f32) vec::v2f = {
+fn bezier_sample(ps: []vec::v2f, xs: []vec::v2f, t: f32) vec::v2f = {
 	xs[0..] = ps[0..];
 
 	let n = len(xs);
 	for (n > 1) {
 		for (let i = 0z; i < n - 1; i += 1) {
-			xs[i] = vec::lerp(xs[i], xs[i + 1], f);
+			xs[i] = vec::lerp(xs[i], xs[i + 1], t);
 		};
 		n -= 1;
 	};
@@ -82,8 +82,8 @@ fn render_bezier_markers(
 	s: f32,
 	color: hex_color,
 ) void = {
-	for (let f = 0f32; f <= 1.0; f += s) {
-		render_marker(renderer, bezier_sample(ps, xs, f), color);
+	for (let t = 0f32; t <= 1.0; t += s) {
+		render_marker(renderer, bezier_sample(ps, xs, t), color);
 	};
 };
 
@@ -94,9 +94,9 @@ fn render_bezier_curve(
 	s: f32,
 	color: hex_color,
 ) void = {
-	for (let f = 0f32; f + s <= 1.0; f += s) {
-		const begin = bezier_sample(ps, xs, f);
-		const end = bezier_sample(ps, xs, f + s);
+	for (let t = 0f32; t + s <= 1.0; t += s) {
+		const begin = bezier_sample(ps, xs, t);
+		const end = bezier_sample(ps, xs, t + s);
 		render_line(renderer, begin, end, color);
 	};
 };
