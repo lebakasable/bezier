@@ -138,6 +138,8 @@ export fn main() void = {
 
 	sdl::render_set_logical_size(renderer, SCREEN_WIDTH, SCREEN_HEIGHT)!;
 
+	let markers = false;
+	let step = 0.05f32;
 	let t = 0f32;
 	for :loop (true) {
 		for (true) match (sdl::poll_event()) {
@@ -149,6 +151,8 @@ export fn main() void = {
 			switch (key.keysym.sym) {
 			case sdl::keycode::RETURN =>
 				ps = [];
+			case sdl::keycode::TAB =>
+				markers = !markers;
 			case => void;
 			};
 		case let mouse: sdl::mouse_button_pressed =>
@@ -171,6 +175,16 @@ export fn main() void = {
 			if (!(ps_selected is void)) {
 				ps[ps_selected as size] = mouse_pos;
 			};
+		case let mouse: sdl::mouse_wheel_scrolled =>
+			if (mouse.y > 0) {
+				if (step <= 1.0) {
+					step += 0.001;
+				};
+			} else if (mouse.y < 0) {
+				if (step > 0.001) {
+					step -= 0.001;
+				};
+			};
 		case => void;
 		};
 
@@ -181,7 +195,11 @@ export fn main() void = {
 			render_line(renderer, ps[0], ps[1], MAUVE_COLOR);
 			render_line(renderer, ps[2], ps[3], MAUVE_COLOR);
 
-			render_bezier_curve(renderer, ps[0], ps[1], ps[2], ps[3], 0.01, TEAL_COLOR);
+			if (markers) {
+				render_bezier_markers(renderer, ps[0], ps[1], ps[2], ps[3], step, TEAL_COLOR);
+			} else {
+				render_bezier_curve(renderer, ps[0], ps[1], ps[2], ps[3], step, TEAL_COLOR);
+			};
 		};
 
 		for (let i = 0z; i < len(ps); i += 1) {
